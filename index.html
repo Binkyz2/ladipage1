@@ -2011,52 +2011,45 @@
 
 <script>
 (function(){
-  function hideBadge(node){
-    if(!node) return;
-    // bubble up a few levels to hide the container box instead of only the link
-    var host = node.closest('div,section,aside,footer,span') || node;
+  function hideNode(el){
+    if(!el) return;
+    var host = el.closest('div,section,aside,footer,span') || el;
     host.style.setProperty('display','none','important');
     host.style.setProperty('visibility','hidden','important');
     host.style.setProperty('opacity','0','important');
     host.style.setProperty('height','0','important');
     host.style.setProperty('pointer-events','none','important');
-    host.classList.add('lpbadge-hidden');
   }
-  function sweep(){
-    try {
-      // 1) any link that goes to ladipage
-      document.querySelectorAll('a[href*="ladipage"]').forEach(hideBadge);
-      // 2) any element that literally contains "powered by" + "ladi"
+
+  function sweepAll(){
+    try{
+      // 1) Xoá mọi phần tử có background-image chứa ladipage.svg
+      document.querySelectorAll('body *').forEach(function(el){
+        var bg = (getComputedStyle(el).backgroundImage || "").toLowerCase();
+        if (bg.includes('ladicdn.com') && bg.includes('ladipage.svg')) hideNode(el);
+      });
+
+      // 2) Xoá mọi node có text "powered by" và "ladi"
       document.querySelectorAll('body *').forEach(function(el){
         var t = (el.innerText || el.textContent || "").toLowerCase();
-        if(!t) return;
-        if (t.includes('powered by') && (t.includes('ladipage') || t.includes('ladi'))) {
-          hideBadge(el);
-        }
+        if (t && t.includes('powered by') && (t.includes('ladipage') || t.includes('ladi'))) hideNode(el);
       });
-      // 3) heuristic: small fixed box bottom-left
-      document.querySelectorAll('body *').forEach(function(el){
-        var cs = window.getComputedStyle(el);
-        if (cs.position === 'fixed' && cs.left === '0px' && (cs.bottom === '0px' || cs.bottom === '1px') && el.offsetWidth < 220 && el.offsetHeight < 80) {
-          var tt = (el.innerText || '').toLowerCase();
-          var ih = (el.innerHTML || '').toLowerCase();
-          if (tt.includes('ladipage') || ih.includes('ladipage')) hideBadge(el);
-        }
-      });
-    } catch(e){/* noop */}
+    }catch(e){}
   }
-  // run immediately, on DOM ready, on changes, and periodically
+
+  // chạy ngay, khi DOM đổi, và định kỳ
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', sweep);
+    document.addEventListener('DOMContentLoaded', sweepAll);
   } else {
-    sweep();
+    sweepAll();
   }
-  new MutationObserver(sweep).observe(document.documentElement, {childList:true, subtree:true});
-  setInterval(sweep, 1200);
+  new MutationObserver(function(){ sweepAll(); })
+    .observe(document.documentElement, {childList:true, subtree:true});
+  setInterval(sweepAll, 1000);
 })();
 </script>
 
+
 </body>
 </html>
-<!--Publish time: Sat, 16 Aug 2025 16:10:46 GMT-->
-<!--LadiPage build time: Fri, 15 Aug 2025 11:25:29 GMT-->
+
